@@ -3,7 +3,7 @@
 # @Author: caleb
 # @Date:   2016-02-27 09:30:50
 # @Last Modified by:   caleb
-# @Last Modified time: 2016-02-29 22:33:20
+# @Last Modified time: 2016-02-29 23:04:24
 from gmusicapi import Mobileclient
 from colorama import Fore,Back,Style
 import colorama
@@ -16,7 +16,6 @@ import texttable as tt
 import readline
 import cmdln
 import string
-import curses
 
 class GMusicClient(cmdln.Cmdln):
 	"""${name}: Google Play Music Command Line Client
