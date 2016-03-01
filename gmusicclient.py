@@ -3,7 +3,7 @@
 # @Author: caleb
 # @Date:   2016-02-27 09:30:50
 # @Last Modified by:   caleb
-# @Last Modified time: 2016-02-29 23:04:24
+# @Last Modified time: 2016-03-01 07:56:55
 from gmusicapi import Mobileclient
 from colorama import Fore,Back,Style
 import colorama
@@ -16,6 +16,7 @@ import texttable as tt
 import readline
 import cmdln
 import string
+from gi.repository import GnomeKeyring as gk
 
 class GMusicClient(cmdln.Cmdln):
 	"""${name}: Google Play Music Command Line Client
@@ -28,6 +29,7 @@ class GMusicClient(cmdln.Cmdln):
 	prompt="gmusic$ "
 	# The MediaPlayer object
 	player=None
+	window=None
 
 	# Initialize the object
 	def __init__(self, email, password):
@@ -308,6 +310,17 @@ class GMusicClient(cmdln.Cmdln):
 	def do_exit(self, line):
 		sys.exit(0)
 
+	def postcmd(self, argv):
+		current = self.player.current
+		if current['index'] != -1:
+			(duration_min, duration_secs) = divmod(int(current['durationMillis'])/1000, 60)
+			(position_min, position_secs) = divmod(self.player.position(), 60)
+			self.prompt = '({pmin:02d}:{psec:02d}/{dmin:02d}:{dsec:02d}) gmusic$ '.format(pmin=int(position_min),psec=int(position_secs),
+				dmin=int(duration_min),dsec=int(duration_secs))
+		else:
+			self.prompt = 'gmusic$ '
+		cmdln.Cmdln.postcmd(self, argv)
+
 	def emptyline(self):
 		return ''
 
@@ -316,8 +329,43 @@ if __name__ == '__main__':
 	# Initialize Colorama
 	#colorama.init(autoreset=True) # Colorama breaks readline!
 
+	# Grab the E-Mail
 	email = raw_input('E-Mail: ')
-	password = getpass.getpass('Password: ')
+	password = None
+
+	# Check that the login keyring exists
+	result, keyrings = gk.list_keyring_names_sync()
+	found_name = False
+	# Hey, we need that!
+	if not 'login' in keyrings:
+		log.error('no login keyring found!')
+		# I should probably create the keyring...
+		sys.exit(0)
+
+	# Look for our e-mail in the login entries
+	for ID in gk.list_item_ids_sync('login')[1]:
+		result, item = gk.item_get_info_sync('login', ID)
+		# Check if the user would like to use the stored credential
+		if item.get_display_name() == email:
+			log.info('Found E-Mail in Gnu Keyring!')
+			yn = raw_input('Use Saved Credential? (y/n) ')
+			if len(yn) and (yn[0] == 'y' or yn[0] == 'Y'):
+				password = item.get_secret()
+			found_name = True
+
+	# If we didn't find an entry, ask for the password
+	if password == None:
+		password = getpass.getpass('Password: ')
+
+	# If the credentials didn't exist, check if they want to add them.
+	if found_name == False:
+		log.warn('Credentials not in Gnu Keyring!')
+		yn = raw_input('Save credentials in Gnu Keyring? (y/n) ')
+		if len(yn) and (yn[0] == 'y' or yn[0] == 'Y'):
+			attr = gk.Attribute.list_new()
+			gk.Attribute.list_append_string(attr, 'username', email)
+			gk.item_create_sync('login', gk.ItemType.GENERIC_SECRET, email, attr, password, True)
+			log.info('Saved credentials to Gnu Keyring!')
 
 	# try:
 	client = GMusicClient(email, password)
