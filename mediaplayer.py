@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: caleb
 # @Date:   2016-02-27 23:09:54
-# @Last Modified by:   caleb
-# @Last Modified time: 2016-02-29 21:46:53
+# @Last Modified by:   Caleb Stewart
+# @Last Modified time: 2016-03-02 00:50:29
 # import pygst
 # pygst.require('0.10')
 # import gst
@@ -94,34 +94,43 @@ class MediaPlayer:
 			return self.radio(ID=ID)
 		return stations
 
-	def stream(self, ID,  type='track'):
-		self.state('STOP')
+	def stream(self, ID,  type='track', how='replace'):
 		if type == 'track':
-			self.queue = [ID]
+			new_queue = [ID]
 		elif type =='playlist':
 			playlist = self.get_playlist(ID)
 			if playlist == None:
 				raise Exception('playlist not found')
-			self.queue = [entry['trackId'] for entry in playlist['tracks']]
+			new_queue = [entry['trackId'] for entry in playlist['tracks']]
 		elif type == 'radio':
 			station = self.api.get_station_tracks(ID, 100)
 			if station == None:
 				raise Exception('radio station not found')
-			self.queue = [ entry['nid'] for entry in station ]
+			new_queue = [ entry['nid'] for entry in station ]
 		elif type == 'artist':
 			artist = self.api.get_artist_info(ID, max_top_tracks=100)
 			if artist == None:
 				raise Exception('artist not found')
-			self.queue = [ entry['nid'] for entry in artist['topTracks'] ]
+			new_queue = [ entry['nid'] for entry in artist['topTracks'] ]
 		elif type == 'album':
 			album = self.api.get_album_info(ID, include_tracks = True)
 			if album == None:
 				raise Exception('album not found')
-			self.queue = [ entry['nid'] for entry in album['tracks'] ]
+			new_queue = [ entry['nid'] for entry in album['tracks'] ]
 		else:
 			raise Exception('unknown stream type: {0}'.format(type))
-		self.current = { 'index': -1 }
-		self.next()
+		if how =='replace':
+			#self.state('STOP')
+			self.queue = new_queue
+			# The queue was replaced, we should start the correct song
+			self.current = { 'index': -1 }
+			self.next()
+		elif how == 'append':
+			self.queue = self.queue + new_queue
+		elif how == 'insert':
+			self.queue = self.queue[:(self.current['index']+1)] + new_queue + self.queue[(self.current['index']+1):]
+		else:
+			raise Exception('unknown stream insertion method: {0}'.format(how))
 
 	def play(self):
 		self.state('PLAY')

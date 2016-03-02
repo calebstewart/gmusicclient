@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # @Author: caleb
 # @Date:   2016-02-27 09:30:50
-# @Last Modified by:   caleb
-# @Last Modified time: 2016-03-01 07:56:55
+# @Last Modified by:   Caleb Stewart
+# @Last Modified time: 2016-03-02 00:42:32
 from gmusicapi import Mobileclient
 from colorama import Fore,Back,Style
 import colorama
@@ -51,6 +51,9 @@ class GMusicClient(cmdln.Cmdln):
 	@cmdln.option('-a', '--artist', action='store_const', const='artist', dest='type', help='stream an artists top tracks')
 	@cmdln.option('-b', '--album', action='store_const', const='album', dest='type', help='stream an album')
 	@cmdln.option('-r', '--radio', action='store_const', const='radio', dest='type', help='stream a radio station')
+	@cmdln.option('-n', '--next', action='store_const', const='insert', dest='how', default='replace', help='insert after the current track')
+	@cmdln.option('--append', action='store_const', const='append', dest='how', help='append to the current play queue')
+	@cmdln.option('--replace', action='store_const', const='replace', dest='how', help='replace the current play queue (default)')
 	def do_stream(self, subcmd, opts, ID):
 		"""${cmd_name}: stream a track, playlist or radio station
 
@@ -58,7 +61,7 @@ class GMusicClient(cmdln.Cmdln):
 		${cmd_option_list}
 		"""
 		try:
-			self.player.stream(ID, type=opts.type)
+			self.player.stream(ID, type=opts.type, how=opts.how)
 			self.do_status(None, None)
 		except Exception as e:
 			log.error('failed to begin stream: {0}'.format(e))
@@ -312,7 +315,7 @@ class GMusicClient(cmdln.Cmdln):
 
 	def postcmd(self, argv):
 		current = self.player.current
-		if current['index'] != -1:
+		if current != None and current['index'] != -1:
 			(duration_min, duration_secs) = divmod(int(current['durationMillis'])/1000, 60)
 			(position_min, position_secs) = divmod(self.player.position(), 60)
 			self.prompt = '({pmin:02d}:{psec:02d}/{dmin:02d}:{dsec:02d}) gmusic$ '.format(pmin=int(position_min),psec=int(position_secs),
@@ -347,7 +350,7 @@ if __name__ == '__main__':
 		result, item = gk.item_get_info_sync('login', ID)
 		# Check if the user would like to use the stored credential
 		if item.get_display_name() == email:
-			log.info('Found E-Mail in Gnu Keyring!')
+			log.info('Found E-Mail in Gnome Keyring!')
 			yn = raw_input('Use Saved Credential? (y/n) ')
 			if len(yn) and (yn[0] == 'y' or yn[0] == 'Y'):
 				password = item.get_secret()
@@ -359,19 +362,15 @@ if __name__ == '__main__':
 
 	# If the credentials didn't exist, check if they want to add them.
 	if found_name == False:
-		log.warn('Credentials not in Gnu Keyring!')
-		yn = raw_input('Save credentials in Gnu Keyring? (y/n) ')
+		log.warn('Credentials not in Gnome Keyring!')
+		yn = raw_input('Save credentials in Gnome Keyring? (y/n) ')
 		if len(yn) and (yn[0] == 'y' or yn[0] == 'Y'):
 			attr = gk.Attribute.list_new()
 			gk.Attribute.list_append_string(attr, 'username', email)
 			gk.item_create_sync('login', gk.ItemType.GENERIC_SECRET, email, attr, password, True)
-			log.info('Saved credentials to Gnu Keyring!')
+			log.info('Saved credentials to Gnome Keyring!')
 
-	# try:
 	client = GMusicClient(email, password)
 	sys.exit(client.main(loop=cmdln.LOOP_ALWAYS))
-	# except Exception as e:
-	# 	log.error(str(e))
-	# 	sys.exit(-1)
 
 	sys.exit(0)
