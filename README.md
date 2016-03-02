@@ -42,3 +42,4 @@ Dependencies
   * [texttable](https://github.com/foutaise/texttable)
   * [getpass](https://docs.python.org/2/library/getpass.html)
   * [colorama](https://github.com/tartley/colorama)
+  * [pygi (pygobject)](https://wiki.gnome.org/action/show/Projects/PyGObject)
