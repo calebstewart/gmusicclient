@@ -6,6 +6,8 @@
 # import pygst
 # pygst.require('0.10')
 # import gst
+import gi
+gi.require_version('Gst', '1.0') 
 from gi.repository import Gst
 import gmusicapi
 import log
@@ -37,7 +39,9 @@ class MediaPlayer:
 		self.current = {'uri': None, 'index': -1}
 
 	def search(self, query, max=25):
-		results = self.api.search_all_access(query, max_results=max)
+		# Deprecated function name
+		#results = self.api.search_all_access(query, max_results=max)
+		results = self.api.search(query, max_results=max)
 		return results #[ r['track'] for r in results[what] ]
 
 	def get_playlists(self):
