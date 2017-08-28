@@ -1,9 +1,9 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # @Author: caleb
 # @Date:   2016-02-27 09:30:50
-# @Last Modified by:   Caleb Stewart
-# @Last Modified time: 2016-11-05 12:51:21
+# @Last modified by:   caleb
+# @Last modified time: 2017-08-27T21:18:25-07:00
 from gmusicapi import Mobileclient
 from colorama import Fore,Back,Style
 import colorama
@@ -16,9 +16,7 @@ import texttable as tt
 import readline
 import cmdln
 import string
-import gi
-gi.require_version('GnomeKeyring', '1.0') 
-from gi.repository import GnomeKeyring as gk
+import keyring
 
 class GMusicClient(cmdln.Cmdln):
 	"""${name}: Google Play Music Command Line Client
@@ -336,41 +334,18 @@ if __name__ == '__main__':
 
 	# Grab the E-Mail
 	email = raw_input('E-Mail: ')
-	password = None
-
-	# Check that the login keyring exists
-	result, keyrings = gk.list_keyring_names_sync()
-	found_name = False
-	# Hey, we need that!
-	if not 'login' in keyrings:
-		log.error('no login keyring found!')
-		# I should probably create the keyring...
-		sys.exit(0)
-
-	# Look for our e-mail in the login entries
-	for ID in gk.list_item_ids_sync('login')[1]:
-		result, item = gk.item_get_info_sync('login', ID)
-		# Check if the user would like to use the stored credential
-		if item.get_display_name() == email:
-			log.info('Found E-Mail in Gnome Keyring!')
-			yn = raw_input('Use Saved Credential? (y/n) ')
-			if len(yn) and (yn[0] == 'y' or yn[0] == 'Y'):
-				password = item.get_secret()
-			found_name = True
+	# Unlock the keyring
+	keyring.get_keyring()
+	# Try and grab the password from the login keyring
+	password = keyring.get_password('login', email)
 
 	# If we didn't find an entry, ask for the password
 	if password == None:
 		password = getpass.getpass('Password: ')
-
-	# If the credentials didn't exist, check if they want to add them.
-	if found_name == False:
-		log.warn('Credentials not in Gnome Keyring!')
+		log.warn('Credentials not in Keyring!')
 		yn = raw_input('Save credentials in Gnome Keyring? (y/n) ')
 		if len(yn) and (yn[0] == 'y' or yn[0] == 'Y'):
-			attr = gk.Attribute.list_new()
-			gk.Attribute.list_append_string(attr, 'username', email)
-			gk.item_create_sync('login', gk.ItemType.GENERIC_SECRET, email, attr, password, True)
-			log.info('Saved credentials to Gnome Keyring!')
+			keyring.set_password('login', email, password)
 
 	client = GMusicClient(email, password)
 	sys.exit(client.main(loop=cmdln.LOOP_ALWAYS))
