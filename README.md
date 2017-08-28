@@ -36,7 +36,7 @@ Commands:
 Dependencies
 ------------
 
-You can use the provided `requirements.txt` file to setup a working environment. `pip` will not install pygobject directly. You have to manually install pygobject either from a system package manager or throgh the git repository like os:
+You can use the provided `requirements.txt` file to setup a working environment. `pip` will not install pygobject directly. You have to manually install pygobject either from a system package manager or through the git repository like so:
 
 ```
 pip install git+https://git.gnome.org/browse/pygobject
