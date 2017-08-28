@@ -33,13 +33,11 @@ Commands:
     volume (v)         set the volume between 0 and 1
 ```
 
-All dependencies should be available through either [pip](https://pip.pypa.io/en/stable/) or [easy_install](http://peak.telecommunity.com/DevCenter/EasyInstall). The dependencies are listed below.
-
 Dependencies
 ------------
-  * [gmusicapi](https://github.com/simon-weber/gmusicapi)
-  * [cmdln](https://github.com/trentm/cmdln)
-  * [texttable](https://github.com/foutaise/texttable)
-  * [getpass](https://docs.python.org/2/library/getpass.html)
-  * [colorama](https://github.com/tartley/colorama)
-  * [pygi (pygobject)](https://wiki.gnome.org/action/show/Projects/PyGObject)
+
+You can use the provided `requirements.txt` file to setup a working environment. `pip` will not install pygobject directly. You have to manually install pygobject either from a system package manager or throgh the git repository like os:
+
+```
+pip install git+https://git.gnome.org/browse/pygobject
+```
